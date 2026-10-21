@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlowCheck – Is your skincare actually working?</title>
+  <meta name="description" content="Track a skincare product with weekly AI skin selfies. Built for deeper skin tones and humid climates." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="logo">✨ Glow<span>Check</span></div>
+    <span id="mockBadge" class="badge hidden">Demo mode</span>
+  </header>
+
+  <main>
+    <!-- 1. ONBOARDING: shown when no product is set up yet -->
+    <section id="view-onboard" class="view">
+      <div class="hero">
+        <h1>Is your skincare <em>actually</em> working?</h1>
+        <p>Snap a selfie when you start a product, then once a week. AI skin analysis tracks dark spots, post‑acne marks, oiliness and more – and tells you to <b>keep</b>, <b>adjust</b> or <b>stop</b>.</p>
+      </div>
+      <form id="onboardForm" class="card">
+        <label>Your first name
+          <input id="inName" required placeholder="e.g. Ada" maxlength="30" />
+        </label>
+        <label>Product you're testing
+          <input id="inProduct" required placeholder="e.g. Niacinamide 10% serum" maxlength="60" />
+        </label>
+        <label>Start date
+          <input id="inStart" type="date" required />
+        </label>
+        <button class="btn primary" type="submit">Start tracking →</button>
+        <p class="fine">Your photos stay on your phone. Only scores are saved (in this browser).</p>
+      </form>
+    </section>
+
+    <!-- 2. DASHBOARD: product, verdict, trend chart, history -->
+    <section id="view-dash" class="view hidden">
+      <div class="card product">
+        <div>
+          <p class="muted" id="hello">Hi!</p>
+          <h2 id="productName">Product</h2>
+          <p class="muted" id="dayCount">Day 1</p>
+        </div>
+        <button class="btn ghost small" id="btnReset" title="Start a new product">New product</button>
+      </div>
+
+      <div id="verdictCard" class="card verdict hidden"></div>
+
+      <button class="btn primary big" id="btnScan">📸 Take this week's selfie</button>
+
+      <div class="card" id="trendCard">
+        <h3>Your trend</h3>
+        <canvas id="trendChart" height="200" role="img" aria-label="Line chart of your overall, dark spot, acne and oiliness scores over time"></canvas>
+        <p class="muted center" id="trendEmpty">Your first scan becomes your baseline.</p>
+      </div>
+
+      <div class="card">
+        <h3>History</h3>
+        <ul id="historyList" class="history"></ul>
+      </div>
+    </section>
+
+    <!-- 3. CAPTURE -->
+    <section id="view-capture" class="view hidden">
+      <button class="back" data-go="dash">← Back</button>
+      <h2>Take your selfie</h2>
+      <ul class="tips-list">
+        <li>💡 Face a window or bright light (no harsh shadows)</li>
+        <li>🧼 Clean face, no makeup, glasses off</li>
+        <li>📏 Face fills most of the photo, looking straight ahead</li>
+        <li>💇🏾 Hair off your forehead</li>
+      </ul>
+      <button class="btn primary big" id="btnCameraKit">Open guided camera</button>
+      <label class="btn ghost big file-btn">
+        Upload or snap a photo
+        <input type="file" id="fileInput" class="visually-hidden" accept="image/jpeg,image/png" capture="user" />
+      </label>
+      <p class="fine center">The guided camera checks lighting and face position for you. If it doesn't work on your device, use upload.</p>
+      <!-- YouCam Camera Kit mounts its UI here (required id) -->
+      <div id="YMK-module"></div>
+    </section>
+
+    <!-- 4. LOADING -->
+    <section id="view-loading" class="view hidden center">
+      <img id="loadingPhoto" class="loading-photo" alt="Your selfie being analysed" />
+      <div class="scanline"></div>
+      <h2>Analysing your skin…</h2>
+      <p class="muted" id="loadingMsg" aria-live="polite">Uploading photo</p>
+    </section>
+
+    <!-- 5. RESULTS -->
+    <section id="view-results" class="view hidden">
+      <button class="back" data-go="dash">← Dashboard</button>
+      <div class="card score-hero">
+        <div class="ring" id="scoreRing" aria-label="Overall skin score"><span id="overallScore">--</span></div>
+        <div>
+          <h2>Skin score</h2>
+          <p class="muted" id="skinAge"></p>
+          <p id="deltaText"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row-between">
+          <h3>Problem areas</h3>
+          <label class="switch" id="maskControls"><input type="checkbox" id="maskToggle" checked /> Show masks</label>
+        </div>
+        <div class="photo-wrap" id="photoWrap">
+          <img id="resultPhoto" alt="Your selfie" />
+          <img id="maskImg" class="mask" alt="" />
+        </div>
+        <div class="chips" id="maskChips" role="group" aria-label="Choose which concern to highlight"></div>
+        <p class="fine" id="maskNote">Masks are only available right after a scan (they expire after ~2 hours). Scores are saved forever.</p>
+      </div>
+
+      <h3 class="section-title">Your concerns</h3>
+      <div id="concernCards" class="grid"></div>
+      <button class="btn primary big" data-go="dash">See my verdict →</button>
+    </section>
+
+    <!-- Error toast -->
+    <div id="toast" class="toast hidden" role="alert" aria-live="assertive"></div>
+  </main>
+
+  <footer class="foot">GlowCheck v1 · Powered by YouCam AI Skin Analysis · Not medical advice</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/concerns.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/verdict.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

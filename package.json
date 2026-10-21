@@ -1,0 +1,16 @@
+{
+  "name": "glowcheck",
+  "version": "1.0.0",
+  "description": "Track whether a skincare product is working with weekly YouCam AI skin analysis selfies. Tuned for deeper skin tones and humid climates.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "vercel dev",
+    "local": "node server.js",
+    "check": "for f in api/*.js js/*.js server.js; do node --check $f || exit 1; done && echo OK",
+    "mock": "MOCK=1 node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

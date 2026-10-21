@@ -1,0 +1,6 @@
+node_modules/
+# all env files (keep the example)
+.env*
+!.env.example
+.vercel/
+.DS_Store

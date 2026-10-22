@@ -121,13 +121,13 @@ function renderChart(scans) {
     data: {
       labels,
       datasets: [
-        line('Overall', scans.map((s) => s.overall), '#b5452f'),
-        line('Dark spots', scans.map((s) => s.concerns.age_spot), '#b5651d', [5, 4]),
-        line('Acne', scans.map((s) => s.concerns.acne), '#ef476f', [5, 4]),
-        line('Oiliness', scans.map((s) => s.concerns.oiliness), '#e9a23b', [5, 4])
+        line('Overall', scans.map((s) => s.overall), '#b4584a'),
+        line('Dark spots', scans.map((s) => s.concerns.age_spot), '#a8533f', [5, 4]),
+        line('Acne', scans.map((s) => s.concerns.acne), '#d4708a', [5, 4]),
+        line('Oiliness', scans.map((s) => s.concerns.oiliness), '#c99a4a', [5, 4])
       ]
     },
-    options: { plugins: { legend: { labels: { boxWidth: 12 } } }, scales: { y: { suggestedMin: 40, suggestedMax: 100 } } }
+    options: { plugins: { legend: { labels: { boxWidth: 12, usePointStyle: true, font: { family: 'DM Sans' }, color: '#6e5048' } } }, scales: { y: { suggestedMin: 40, suggestedMax: 100 } } }
   });
 }
 
@@ -263,6 +263,14 @@ async function pollTask(taskId) {
 }
 
 // ---------- Results screen ----------
+const CONCERN_ICONS = { age_spot: '🌗', acne: '🫧', oiliness: '💧', pore: '🔍', redness: '🌹', texture: '🪶', moisture: '💦',
+  radiance: '✨', dark_circle_v2: '👁️', eye_bag: '😴', wrinkle: '〰️' };
+// Coloured "change since first scan" pill: green = better, rose = worse, grey = no change.
+function deltaBadge(d) {
+  const cls = d > 0 ? 'up' : d < 0 ? 'down' : 'neutral';
+  const txt = d > 0 ? `▲ +${d} since first scan` : d < 0 ? `▼ −${Math.abs(d)} since first scan` : 'No change since first scan';
+  return `<span class="delta-badge ${cls}">${txt}</span>`;
+}
 function renderResults(result) {
   const { scans } = loadData();
   const base = scans[0];
@@ -271,9 +279,8 @@ function renderResults(result) {
   $('scoreRing').style.setProperty('--p', result.overall || 0);
   $('skinAge').textContent = result.skinAge ? `Skin age: ${result.skinAge}` : '';
   if (scans.length > 1 && result.overall != null && base.overall != null) {
-    const d = result.overall - base.overall;
-    $('deltaText').innerHTML = `<b style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)}</b> vs. your baseline`;
-  } else $('deltaText').textContent = 'This is your baseline 📌';
+    $('deltaText').innerHTML = deltaBadge(result.overall - base.overall);
+  } else $('deltaText').innerHTML = '<span class="delta-badge neutral">📌 This is your baseline</span>';
 
   // Photo + mask chips
   // Masks are drawn on YouCam's resized copy of the photo (same aspect, transparent PNG
@@ -314,10 +321,15 @@ function renderResults(result) {
     const prev = base && scans.length > 1 ? base.concerns[k] : null;
     const change = prev != null ? s - prev : null;
     return `<div class="concern">
-      <div class="top"><b>${c.label}${c.focus ? '<span class="focus">focus</span>' : ''}</b>
-        <span class="num" style="color:${scoreColor(s)}">${s}</span></div>
-      <div class="bar"><div style="width:${s}%;background:${scoreColor(s)}"></div></div>
-      ${change != null ? `<p class="muted">${change >= 0 ? '▲' : '▼'} ${Math.abs(change)} since start</p>` : ''}
+      <div class="concern-head">
+        <div class="mini-ring" style="--p:${s};--c:${scoreColor(s)}" role="img" aria-label="${c.label} score ${s} out of 100">
+          <span class="mini-num" style="color:${scoreColor(s)}">${s}</span>
+        </div>
+        <div class="concern-info">
+          <b class="concern-name"><span class="c-icon" aria-hidden="true">${CONCERN_ICONS[k] || '✨'}</span>${c.label}${c.focus ? '<span class="focus">focus</span>' : ''}</b>
+          ${change != null ? deltaBadge(change) : '<span class="delta-badge neutral">Baseline</span>'}
+        </div>
+      </div>
       <details ${s < 65 ? 'open' : ''}><summary>Ingredient tips</summary><p>${c.tip}</p>${c.avoid ? `<p class="muted">⚠️ ${c.avoid}</p>` : ''}</details>
     </div>`;
   }).join('');

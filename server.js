@@ -6,7 +6,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const TYPES = { '.json': 'application/json', '.ico': 'image/x-icon', '.jpg': 'image/jpeg', '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const TYPES = { '.json': 'application/json', '.ico': 'image/x-icon', '.jpg': 'image/jpeg', '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp' };
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
@@ -19,7 +19,7 @@ http.createServer(async (req, res) => {
   // Only serve the public front-end files (never .env*, server.js, package.json, api/ source…).
   const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname).replace(/^\/+/, '');
   const file = path.join(__dirname, path.normalize(rel));
-  const ok = rel === 'index.html' || /^(css|js)\/[\w.-]+$/.test(rel);
+  const ok = rel === 'index.html' || /^(css|js|img)\/[\w.-]+$/.test(rel);
   if (!ok || !file.startsWith(__dirname + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; return res.end('Not found'); }
   res.setHeader('Content-Type', TYPES[path.extname(file)] || 'application/octet-stream');
   fs.createReadStream(file).pipe(res);

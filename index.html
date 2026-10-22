@@ -7,7 +7,9 @@
   <meta name="description" content="Track a skincare product with weekly AI skin selfies. Built for deeper skin tones and humid climates." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <meta name="theme-color" content="#fbe4dc" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,11 +22,45 @@
   <main>
     <!-- 1. ONBOARDING: shown when no product is set up yet -->
     <section id="view-onboard" class="view">
-      <div class="hero">
-        <h1>Is your skincare <em>actually</em> working?</h1>
-        <p>Snap a selfie when you start a product, then once a week. AI skin analysis tracks dark spots, post‑acne marks, oiliness and more – and tells you to <b>keep</b>, <b>adjust</b> or <b>stop</b>.</p>
+      <div class="hero hero-editorial">
+        <div class="hero-photo">
+          <img src="img/hero-glow.webp" width="768" height="1024" alt="Illustration of a woman with warm brown, dewy skin and curly hair in a high bun, resting a hand on her cheek" fetchpriority="high" />
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">AI skin tracker · every glow has a story</p>
+          <h1>Is your skincare <em>actually</em> working?</h1>
+          <p class="lede">A weekly selfie, analysed by AI. We track dark spots, post&#8209;acne marks and oiliness, then tell you to <b>keep</b>, <b>adjust</b> or <b>stop</b>.</p>
+          <a class="hero-link" href="#onboardForm">Start my glow check <span aria-hidden="true">↓</span></a>
+        </div>
       </div>
-      <form id="onboardForm" class="card">
+
+      <section class="how" aria-labelledby="howTitle">
+        <p class="kicker">How it works</p>
+        <h2 id="howTitle">Three steps to <em>real</em> results</h2>
+        <ol class="how-row">
+          <li class="how-card">
+            <img src="img/step-selfie.webp" width="600" height="600" loading="lazy" alt="The same woman holding a cream phone at arm's length, taking a selfie" />
+            <span class="how-num">01</span>
+            <h3>Snap a selfie</h3>
+            <p>Bare skin, good light. Takes 30 seconds.</p>
+          </li>
+          <li class="how-card">
+            <img src="img/step-track.webp" width="600" height="600" loading="lazy" alt="She looks thoughtfully at her phone, checking her skin progress" />
+            <span class="how-num">02</span>
+            <h3>Track weekly</h3>
+            <p>Use your product as normal, then scan again each week.</p>
+          </li>
+          <li class="how-card">
+            <img src="img/step-verdict.webp" width="600" height="600" loading="lazy" alt="She smiles with delight at her phone after seeing her verdict" />
+            <span class="how-num">03</span>
+            <h3>Get your verdict</h3>
+            <p>Keep, adjust or stop, based on your own skin data.</p>
+          </li>
+        </ol>
+      </section>
+
+      <form id="onboardForm" class="card onboard-card">
+        <h2 class="form-title">Let's set up your glow check</h2>
         <label>Your first name
           <input id="inName" required placeholder="e.g. Ada" maxlength="30" />
         </label>
@@ -34,8 +70,8 @@
         <label>Start date
           <input id="inStart" type="date" required />
         </label>
-        <button class="btn primary" type="submit">Start tracking →</button>
-        <p class="fine">Your photos stay on your phone. Only scores are saved (in this browser).</p>
+        <button class="btn primary big glow-cta" type="submit">Start my glow check <span aria-hidden="true">✨</span></button>
+        <p class="fine center">🔒 Your photos stay on your phone. Only scores are saved (in this browser).</p>
       </form>
     </section>
 

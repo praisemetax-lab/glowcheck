@@ -89,3 +89,7 @@ npm run check         # node --check on every JS file
 
 ## License
 MIT – see `LICENSE`.
+
+## Image credits
+
+All home-page images in `img/` (`hero-glow.webp`, `step-selfie.webp`, `step-track.webp`, `step-verdict.webp`) are **AI-generated illustrations of a fictional person**. They were created for GlowCheck and don't show a real model, so no photographer credit or model release applies.

@@ -60,7 +60,7 @@
       </section>
 
       <form id="onboardForm" class="card onboard-card">
-        <h2 class="form-title">Let's set up your glow check</h2>
+        <h2 class="form-title" id="formTitle">Let's set up your glow check</h2>
         <label>Your first name
           <input id="inName" required placeholder="e.g. Ada" maxlength="30" />
         </label>
@@ -71,22 +71,31 @@
           <input id="inStart" type="date" required />
         </label>
         <button class="btn primary big glow-cta" type="submit">Start my glow check <span aria-hidden="true">✨</span></button>
+        <button class="btn ghost hidden" type="button" id="btnCancelAdd">Cancel, back to my products</button>
         <p class="fine center">🔒 Your photos stay on your phone. Only scores are saved (in this browser).</p>
       </form>
     </section>
 
     <!-- 2. DASHBOARD: product, verdict, trend chart, history -->
     <section id="view-dash" class="view hidden">
+      <div class="switcher" aria-labelledby="switcherTitle">
+        <div class="row-between">
+          <h2 id="switcherTitle" class="switcher-title">My products</h2>
+          <button class="btn ghost small" id="btnReset" type="button">+ Add product</button>
+        </div>
+        <div id="productList" class="product-list" role="list"></div>
+      </div>
       <div class="card product">
         <div>
           <p class="muted" id="hello">Hi!</p>
           <h2 id="productName">Product</h2>
           <p class="muted" id="dayCount">Day 1</p>
         </div>
-        <button class="btn ghost small" id="btnReset" title="Start a new product">New product</button>
+        <button class="btn ghost small danger" id="btnDeleteProduct" type="button">Delete</button>
       </div>
 
-      <div id="verdictCard" class="card verdict hidden"></div>
+      <div id="verdictCard" class="card verdict hidden" aria-live="polite"></div>
+      <section id="recsCard" class="recs hidden" aria-labelledby="recsTitle"></section>
 
       <button class="btn primary big" id="btnScan">📸 Take this week's selfie</button>
 
@@ -168,11 +177,12 @@
     <div id="toast" class="toast hidden" role="alert" aria-live="assertive"></div>
   </main>
 
-  <footer class="foot">GlowCheck v1 · Powered by YouCam AI Skin Analysis · Not medical advice</footer>
+  <footer class="foot">GlowCheck v1 · Powered by YouCam AI Skin Analysis · Not medical advice<br><button type="button" class="linklike hidden" id="btnClearAll">Start over · clear all data</button></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="js/concerns.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/knowledge.js"></script>
   <script src="js/verdict.js"></script>
   <script src="js/app.js"></script>
 </body>

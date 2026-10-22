@@ -13,6 +13,20 @@ function show(name) {
   $('view-' + name).classList.remove('hidden');
   window.scrollTo(0, 0);
   if (name === 'dash') renderDashboard();
+  if (name === 'onboard') prepOnboard();
+  $('btnClearAll').classList.toggle('hidden', !loadAll().products.length);
+}
+
+// Setup form doubles as "add another product" when products already exist.
+function prepOnboard() {
+  const all = loadAll(); const adding = all.products.length > 0;
+  $('formTitle').textContent = adding ? 'Add another product' : "Let's set up your glow check";
+  $('btnCancelAdd').classList.toggle('hidden', !adding);
+  if (adding && !$('inName').value) $('inName').value = all.name || '';
+  if (adding) {
+    $('inStart').value = new Date().toISOString().slice(0, 10);
+    requestAnimationFrame(() => { $('onboardForm').scrollIntoView({ block: 'start' }); $('inProduct').focus({ preventScroll: true }); });
+  }
 }
 
 function toast(msg) {
@@ -54,16 +68,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('onboardForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const data = loadData();
-    data.profile = { name: $('inName').value.trim(), product: $('inProduct').value.trim(), startDate: $('inStart').value };
-    data.scans = [];
-    try { saveData(data); } catch (err) { return toast(err.message); }
+    try { addProduct($('inName').value.trim(), $('inProduct').value.trim(), $('inStart').value); }
+    catch (err) { return toast(err.message); }
+    $('inProduct').value = '';
     show('dash');
   });
 
-  $('btnReset').addEventListener('click', () => {
-    if (confirm('Start tracking a new product? Your current history will be cleared.')) {
-      localStorage.removeItem(STORE_KEY);
+  // "+ Add product": open the setup form WITHOUT deleting anything (keeps the old id for other code).
+  $('btnReset').addEventListener('click', () => show('onboard'));
+  $('btnCancelAdd').addEventListener('click', () => show('dash'));
+
+  $('btnDeleteProduct').addEventListener('click', () => {
+    const d = loadData(); if (!d.profile) return;
+    if (confirm(`Delete "${d.profile.product}" and its ${d.scans.length} scan${d.scans.length === 1 ? '' : 's'}? This can't be undone.`)) {
+      deleteProduct(d.id);
+      show(loadAll().products.length ? 'dash' : 'onboard');
+    }
+  });
+
+  $('btnClearAll').addEventListener('click', () => {
+    if (confirm('Start over? This deletes ALL products and scan history saved in this browser.')) {
+      clearAllData();
+      $('inName').value = '';
       show('onboard');
     }
   });
@@ -77,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Ask the server if we're in demo/mock mode (just for the badge).
   fetch('/api/health').then((r) => r.json()).then((h) => { if (h.mock) $('mockBadge').classList.remove('hidden'); }).catch(() => {});
 
-  show(loadData().profile ? 'dash' : 'onboard');
+  show(loadAll().products.length ? 'dash' : 'onboard');
 });
 
 // ---------- Dashboard ----------
@@ -89,14 +115,36 @@ function renderDashboard() {
   const day = Math.max(1, daysBetween(profile.startDate, new Date()) + 1);
   $('dayCount').textContent = `Day ${day} · ${scans.length} scan${scans.length === 1 ? '' : 's'}`;
 
+  renderSwitcher();
+
   // Verdict card
   const v = getVerdict(profile, scans);
   const vc = $('verdictCard');
+  const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const rc = $('recsCard');
   if (v) {
     vc.className = 'card verdict ' + v.type;
-    vc.innerHTML = `<span class="tag">${v.type.toUpperCase()}</span><h3 style="margin-top:8px">${v.title}</h3><p>${v.text}</p>` +
-      (v.reasons.length ? '<ul>' + v.reasons.map((r) => `<li>${r}</li>`).join('') + '</ul>' : '');
-  } else { vc.className = 'card verdict hidden'; vc.innerHTML = ''; }
+    const chip = (c) => `<li class="dchip ${c.d > 0 ? 'up' : 'down'}">${esc(c.label)} ${c.d > 0 ? '+' + c.d : '−' + Math.abs(c.d)}</li>`;
+    const scoreList = (arr) => arr.map((x) => `<li><span>${esc(x.label)}</span><b style="color:${scoreColor(x.s)}">${x.s}</b></li>`).join('');
+    vc.innerHTML = `<span class="tag">${v.type.toUpperCase()}</span><h3 class="v-title">${esc(v.title)}</h3><p class="v-text">${esc(v.text)}</p>` +
+      (v.changes && v.changes.length ? `<p class="v-label">What changed since your first scan</p><ul class="dchips">${v.overallDelta != null ? `<li class="dchip ${v.overallDelta > 0 ? 'up' : v.overallDelta < 0 ? 'down' : 'flat'}">Overall ${v.overallDelta > 0 ? '+' : v.overallDelta < 0 ? '−' : '±'}${Math.abs(v.overallDelta)}</li>` : ''}${v.changes.map(chip).join('')}</ul>` : '') +
+      (scans.length < 2 && v.summary ? `<div class="v-split"><div><p class="v-label">Strongest</p><ul class="v-scores">${scoreList(v.summary.strong)}</ul></div><div><p class="v-label">Needs care</p><ul class="v-scores">${scoreList(v.summary.weak)}</ul></div></div>` : '') +
+      (v.meaning ? `<p class="v-label">What it means</p><p>${esc(v.meaning)}</p>` : '') +
+      (v.product ? `<p class="v-label">About ${esc(v.product.name)}</p><p>${esc(v.product.about)}</p>` : '') +
+      `<div class="v-next"><p class="v-label">Next step</p><p>${esc(v.next)}</p></div>` +
+      (v.watch ? `<p class="v-label">What to watch</p><p class="muted">${esc(v.watch)}${v.watchExtra ? ' ' + esc(v.watchExtra) : ''}</p>` : '');
+    if (v.recs && v.recs.length) {
+      rc.className = 'recs';
+      rc.innerHTML = `<p class="kicker">Try instead</p><h3 id="recsTitle" class="recs-title">Better matches for <em>your</em> skin</h3><p class="muted">${esc(v.recsIntro)}</p>
+        <ul class="rec-list">${v.recs.map((r, i) => `<li class="rec-card">
+          <span class="rec-num">0${i + 1}</span><span class="rec-for">For ${esc(r.forLabel)}</span>
+          <h4>${esc(r.name)}</h4><p>${esc(r.why)}</p>
+          <p class="rec-label"><b>On the label:</b> ${esc(r.label)}</p>
+          <p class="rec-ex"><b>Examples:</b> ${r.examples.map((e) => `<a href="${searchUrl(e)}" target="_blank" rel="noopener">${esc(e)}</a>`).join(' · ')}</p>
+        </li>`).join('')}</ul>
+        <p class="fine">Not medical advice. Patch test new products on your jaw for 2–3 days first, and introduce one at a time. Example links are plain web searches.</p>`;
+    } else { rc.className = 'recs hidden'; rc.innerHTML = ''; }
+  } else { vc.className = 'card verdict hidden'; vc.innerHTML = ''; rc.className = 'recs hidden'; rc.innerHTML = ''; }
 
   // History list (newest first)
   $('historyList').innerHTML = scans.length ? scans.slice().reverse().map((s, i) => `
@@ -106,6 +154,26 @@ function renderDashboard() {
     : '<li class="muted">No scans yet.</li>';
 
   renderChart(scans);
+}
+
+// "My products" switcher: one pill-card per product with name, days and latest verdict tag.
+function renderSwitcher() {
+  const all = loadAll(); const active = activeProduct(all);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  $('productList').innerHTML = all.products.map((p) => {
+    const v = getVerdict({ name: all.name, product: p.product, startDate: p.startDate }, p.scans);
+    const day = Math.max(1, daysBetween(p.startDate, new Date()) + 1);
+    const on = active && p.id === active.id;
+    return `<button type="button" role="listitem" class="pcard${on ? ' active' : ''}" data-id="${p.id}" aria-current="${on}">
+      <span class="pname">${esc(p.product)}</span>
+      <span class="pmeta">Day ${day} · ${p.scans.length} scan${p.scans.length === 1 ? '' : 's'}</span>
+      <span class="ptag ${v ? v.type : 'none'}">${v ? v.type.toUpperCase() : 'NO SCANS'}</span>
+    </button>`;
+  }).join('');
+  $('productList').querySelectorAll('.pcard').forEach((b) => b.addEventListener('click', () => {
+    setActiveProduct(b.dataset.id); renderDashboard();
+  }));
+  const act = $('productList').querySelector('.active'); if (act) act.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 function renderChart(scans) {

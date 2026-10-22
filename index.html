@@ -94,6 +94,25 @@
         <button class="btn ghost small danger" id="btnDeleteProduct" type="button">Delete</button>
       </div>
 
+      <section id="remindCard" class="remind" aria-live="polite">
+        <div class="remind-row">
+          <span class="remind-icon" aria-hidden="true" id="remindIcon">🗓️</span>
+          <div><p class="remind-text" id="remindText">Next selfie soon</p><p class="remind-sub" id="remindSub"></p></div>
+        </div>
+        <button type="button" class="btn primary remind-cta hidden" id="btnRemindScan">📸 Take my selfie now</button>
+        <details class="remind-cal">
+          <summary>Add a weekly reminder to my calendar</summary>
+          <div class="cal-body">
+            <label class="cal-time">Remind me at
+              <input type="time" id="remindTime" value="09:00" />
+            </label>
+            <button type="button" class="btn ghost" id="btnIcs">Add to my phone calendar</button>
+            <a class="btn ghost" id="lnkGcal" href="#" target="_blank" rel="noopener">Add to Google Calendar</a>
+            <p class="fine">Repeats every week from <span id="calStart">your next due date</span>, with an alert 15 minutes before.</p>
+          </div>
+        </details>
+      </section>
+
       <div id="verdictCard" class="card verdict hidden" aria-live="polite"></div>
       <section id="recsCard" class="recs hidden" aria-labelledby="recsTitle"></section>
 
@@ -184,6 +203,7 @@
   <script src="js/storage.js"></script>
   <script src="js/knowledge.js"></script>
   <script src="js/verdict.js"></script>
+  <script src="js/reminder.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -95,6 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   $('btnScan').addEventListener('click', () => show('capture'));
+  $('btnRemindScan').addEventListener('click', () => show('capture'));
+  $('remindTime').addEventListener('change', () => { setRemindTime($('remindTime').value || '09:00'); renderReminder(); });
+  $('btnIcs').addEventListener('click', () => {
+    const p = activeProduct(loadAll()); if (!p) return;
+    const ics = buildICS(p.product, dueInfo(p).next, $('remindTime').value || '09:00');
+    window.__lastIcs = ics; // handy for testing
+    openICS(ics, 'glowcheck-' + p.product.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.ics');
+  });
   $('fileInput').addEventListener('change', onFilePicked);
   $('fileInputCam').addEventListener('change', onFilePicked);
   $('btnCameraKit').addEventListener('click', openCameraKit);
@@ -116,6 +124,7 @@ function renderDashboard() {
   $('dayCount').textContent = `Day ${day} · ${scans.length} scan${scans.length === 1 ? '' : 's'}`;
 
   renderSwitcher();
+  renderReminder();
 
   // Verdict card
   const v = getVerdict(profile, scans);
@@ -165,8 +174,8 @@ function renderSwitcher() {
     const day = Math.max(1, daysBetween(p.startDate, new Date()) + 1);
     const on = active && p.id === active.id;
     return `<button type="button" role="listitem" class="pcard${on ? ' active' : ''}" data-id="${p.id}" aria-current="${on}">
-      <span class="pname">${esc(p.product)}</span>
-      <span class="pmeta">Day ${day} · ${p.scans.length} scan${p.scans.length === 1 ? '' : 's'}</span>
+      <span class="pname">${esc(p.product)}${isDue(p) ? '<span class="due-dot" aria-hidden="true"></span>' : ''}</span>
+      <span class="pmeta">Day ${day} · ${p.scans.length} scan${p.scans.length === 1 ? '' : 's'}${isDue(p) ? ' · <b class="due-txt">Selfie due</b>' : ''}</span>
       <span class="ptag ${v ? v.type : 'none'}">${v ? v.type.toUpperCase() : 'NO SCANS'}</span>
     </button>`;
   }).join('');
@@ -174,6 +183,22 @@ function renderSwitcher() {
     setActiveProduct(b.dataset.id); renderDashboard();
   }));
   const act = $('productList').querySelector('.active'); if (act) act.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+// Weekly reminder banner + calendar buttons for the ACTIVE product.
+function renderReminder() {
+  const all = loadAll(); const p = activeProduct(all); if (!p) return;
+  const info = dueInfo(p);
+  $('remindCard').className = 'remind ' + info.status;
+  $('remindIcon').textContent = info.status === 'upcoming' ? '🗓️' : info.status === 'overdue' ? '⏰' : '✨';
+  $('remindText').textContent = info.text;
+  $('remindSub').textContent = info.sub;
+  $('btnScan').textContent = info.status === 'upcoming' ? "📸 Take an extra selfie" : "📸 Take this week's selfie";
+  $('btnRemindScan').classList.toggle('hidden', info.status === 'upcoming');
+  $('remindTime').value = getRemindTime();
+  const t = $('remindTime').value || '09:00';
+  $('calStart').textContent = fmtDue(reminderEvent(p.product, info.next, t).start) + ' at ' + t;
+  $('lnkGcal').href = googleCalUrl(p.product, info.next, t);
 }
 
 function renderChart(scans) {

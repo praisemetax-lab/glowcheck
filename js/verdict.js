@@ -57,6 +57,7 @@ function baseVerdict(profile, scans) {
 // ---------- Explanations + "Try instead" recommendations ----------
 // Wraps the rule-based verdict with plain-language reasons from the REAL scores and the local knowledge base.
 const label = (k) => (CONCERNS[k] ? CONCERNS[k].label : k);
+const vPlural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const signed = (n) => (n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '±0');
 
 function skinSummary(scan) {
@@ -129,26 +130,46 @@ function getVerdict(profile, scans) {
   const fmt = (arr) => arr.slice(0, 3).map((c) => `${c.label} ${signed(c.d)}`).join(', ');
   const days = daysBetween(profile.startDate, last.date);
 
+  // Each section has ONE job: text = headline result with numbers; meaning = why/interpretation;
+  // product.about = what the product does; next = one concrete action; watch = what to track (product-specific).
+  const lc = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+  const best = ups[0], worst = downs[0];
+  const od = v.overallDelta ?? 0;
+  const weeks = Math.max(1, Math.round(days / 7));
+  const patient = v.type === 'keep' && /patient/i.test(v.title);
   if (scans.length < 2) {
     v.title = 'Your baseline is saved';
-    v.text = `Your overall skin score is ${summary.overall ?? '--'}, which looks ${overallWords(summary.overall)}. ` +
-      `Your strongest area is ${summary.strong[0] ? summary.strong[0].label.toLowerCase() : '—'}; ${summary.weak[0] ? summary.weak[0].label.toLowerCase() : '—'} needs the most care.`;
-    v.meaning = v.product.fit === 'good' ? `Good match: ${profile.product} targets ${v.product.matches.join(' and ')}, which are among your weakest areas.`
-      : v.product.fit === 'partial' ? `Partial match: it helps ${v.product.matches.join(', ')}, but not your other weak spots.`
-      : v.product.fit === 'off' ? `Mismatch: ${profile.product} isn't designed for your weakest areas (${summary.weak.map((x) => x.label).join(', ')}). You can keep it, but consider adding something that targets them.`
-      : '';
-    v.next = 'Use it consistently, then take your next selfie in 7 days in the same light. Most products need 4–8 weeks to show results.';
-  } else {
-    v.meaning = v.type === 'keep' ? (ups.length ? `It's working where it counts: ${fmt(ups)}.` : 'No big moves yet, which is normal before week 6.')
-      : v.type === 'adjust' ? `After ${days} days, little has improved${downs.length ? ` and some areas slipped (${fmt(downs)})` : ''}. This product may not suit your skin's main needs.`
-      : v.type === 'stop' ? `Your skin is moving the wrong way${downs.length ? `: ${fmt(downs)}` : ''}. That can mean irritation or a poor match.`
-      : `Only ${days} ${days === 1 ? 'day' : 'days'} in. Early changes${v.changes.length ? ` (${fmt(v.changes)})` : ''} are often just day-to-day variation.`;
-    v.next = v.type === 'keep' ? 'Keep the same routine and scan weekly in the same light. Daily SPF protects your progress.'
-      : v.type === 'adjust' ? 'Switch to (or add) one of the options below that targets your weakest areas. Change one product at a time and give it 6–8 weeks.'
-      : v.type === 'stop' ? 'Pause this product now. Use only a gentle cleanser, a plain moisturiser and SPF for 1–2 weeks. See a dermatologist if redness, burning or breakouts continue.'
-      : 'Keep using it as directed and scan again next week.';
+    v.text = `Overall score ${summary.overall ?? '--'}: ${overallWords(summary.overall)}.`;
+    v.meaning = v.product.fit === 'good' ? `Good match: it targets ${v.product.matches.join(' and ').toLowerCase()}, two of the areas that need the most care.`
+      : v.product.fit === 'partial' ? `Partial match: it targets ${v.product.matches.join(', ').toLowerCase()}, but not your other weak areas.`
+      : v.product.fit === 'off' ? "Mismatch: it isn't designed for the areas that need the most care, so expect little change there."
+      : "We can't tell yet how well it matches the areas that need the most care.";
+    v.next = 'Take your next selfie in 7 days, in the same light and at the same time of day.';
+  } else if (v.type === 'wait') {
+    v.text = `Overall ${signed(od)} after ${vPlural(days, 'day')}${best ? `, ${lc(best.label)} ${signed(best.d)}` : ''}.`;
+    v.meaning = 'Too soon to judge: skin renews about every 4 weeks, and light, sleep or humidity can shift scores a few points from week to week.';
+    v.next = 'Keep using it daily and scan again on your due date.';
+  } else if (v.type === 'keep' && !patient) {
+    v.text = `Overall ${signed(od)} since your first scan${best ? `, with ${lc(best.label)} improving most (${signed(best.d)})` : ''}.`;
+    v.meaning = `Your skin is responding: the improvements outweigh the dips${worst ? ` (the ${lc(worst.label)} ${signed(worst.d)} is within normal week-to-week variation)` : ''}.`;
+    v.next = "Change nothing: same routine, daily SPF, and a weekly scan.";
+  } else if (patient) {
+    v.text = `Overall ${signed(od)} after ${vPlural(weeks, 'week')}: no clear change yet.`;
+    v.meaning = 'Expected at this stage: skin renews about every 4 weeks, so most actives look subtle at first.';
+    v.next = 'Stay consistent until at least week 6 before deciding.';
+  } else if (v.type === 'adjust') {
+    v.text = `Overall ${signed(od)} after ${vPlural(weeks, 'week')}${worst ? `; ${lc(worst.label)} slipped ${signed(worst.d)}` : ''}.`;
+    v.title = 'Time to adjust';
+    v.meaning = "Six weeks covers more than one skin-renewal cycle, so this product most likely doesn't target what your skin needs most.";
+    v.next = 'Switch to (or add) one option below. Change one product at a time and give it 6–8 weeks.';
+    v.watch = `With the new product, track ${summary.weak.map((x) => lc(x.label)).join(', ')} – your lowest scores right now.`;
+  } else { // stop
+    v.text = `Overall ${signed(od)} since your first scan${worst ? `, led by ${lc(worst.label)} ${signed(worst.d)}` : ''}.`;
+    v.meaning = 'A drop like this usually means irritation or a poor match. "Purging" only affects breakouts, not redness or hydration.';
+    v.next = 'Pause it now. Use only a gentle cleanser, plain moisturiser and SPF for 1–2 weeks; see a dermatologist if redness or burning continues.';
+    v.watch = 'On your next scan, check whether the scores that dropped bounce back. If they do, this product was the cause.';
   }
-  if (heavyWarn) v.watchExtra = 'Heads-up: occlusives like petroleum jelly can feel heavy and trap oil on oily or acne-prone skin – use a thin layer only on dry areas.';
+  if (heavyWarn && !actives.some((a) => a.heavy)) v.watchExtra = 'Heads-up: occlusives like petroleum jelly can feel heavy and trap oil on oily or acne-prone skin – use a thin layer only on dry areas.';
 
   // "Try instead" cards: ADJUST / STOP, or a baseline where the product misses the weakest concerns.
   const wantRecs = v.type === 'adjust' || v.type === 'stop' || (scans.length < 2 && v.product.fit === 'off');

@@ -355,3 +355,27 @@ h2 { font-weight: 600; } h3 { font-family: var(--font-head); font-weight: 600; f
 .recs .fine { margin-top: 12px; }
 @media (prefers-reduced-motion: no-preference) { .rec-card { animation: rise .55s cubic-bezier(.2,.7,.2,1) both; } .rec-card:nth-child(2) { animation-delay: .06s; } .rec-card:nth-child(3) { animation-delay: .12s; } }
 .verdict .dchips { padding-left: 0; margin-top: 0; }
+
+/* ---------- Weekly reminder ---------- */
+.remind { background: #fff; border: 1px solid #ecd9cf; border-radius: 22px; padding: 16px 18px; margin: 14px 0 4px; }
+.remind-row { display: flex; gap: 14px; align-items: flex-start; }
+.remind-icon { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-size: 1.2rem; background: linear-gradient(135deg, var(--blush), var(--peach)); }
+.remind-text { margin: 2px 0 2px; font-family: var(--font-head); font-weight: 400; font-size: 1.2rem; line-height: 1.25; color: var(--ink); }
+.remind-sub { margin: 0; font-size: .85rem; color: var(--muted); line-height: 1.45; }
+.remind.due, .remind.first { border-color: var(--rose); background: linear-gradient(150deg, #fff, #fff1ea); }
+.remind.overdue { border: 1.5px solid #b23a48; background: linear-gradient(150deg, #fff, #fde8ea); }
+.remind.overdue .remind-text { color: #8e2433; }
+.remind.overdue .remind-icon { background: #fbe0e3; }
+.remind-cal { margin-top: 12px; border-top: 1px solid rgba(232,180,160,.45); padding-top: 10px; }
+.remind-cal summary { cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--rose-deep); padding: 4px 0; }
+.cal-body { padding-top: 10px; }
+.cal-body .btn { margin: 8px 0; font-size: .92rem; padding: 12px; text-decoration: none; display: block; }
+.cal-time { font-size: .85rem; font-weight: 500; margin-bottom: 6px; }
+.cal-time input { max-width: 160px; display: block; }
+.due-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #b23a48; margin-left: 6px; vertical-align: middle; box-shadow: 0 0 0 3px rgba(178,58,72,.18); }
+.due-txt { color: #8e2433; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  #btnRemindScan { animation: cta-pulse 2.4s ease-in-out infinite; }
+}
+@keyframes cta-pulse { 0%,100% { box-shadow: 0 10px 24px rgba(143,63,54,.28); } 50% { box-shadow: 0 10px 34px rgba(143,63,54,.5), 0 0 0 6px rgba(180,88,74,.12); } }
+.remind-cta { margin-top: 14px; padding: 13px; }

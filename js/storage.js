@@ -3,7 +3,7 @@
 // v2 shape (multi-product):
 //   { name, activeId, products: [ { id, product, startDate, scans: [ {date, overall, skinAge, concerns:{acne: 70,...}, thumb} ] } ] }
 // Old v1 shape ({ profile:{name, product, startDate}, scans:[...] } under 'glowcheck_v1') is migrated automatically.
-// loadData()/saveData() still return/accept the ACTIVE product as { profile, scans } so older code keeps working.
+// loadData() returns the ACTIVE product as { profile, scans }.
 const STORE_KEY = 'glowcheck_v2';
 const OLD_KEY = 'glowcheck_v1';
 
@@ -51,14 +51,6 @@ function loadData() {
   const all = loadAll(); const p = activeProduct(all);
   if (!p) return { profile: null, scans: [] };
   return { profile: { name: all.name, product: p.product, startDate: p.startDate }, scans: p.scans, id: p.id };
-}
-
-function saveData(data) {
-  const all = loadAll(); const p = activeProduct(all);
-  if (!p) return;
-  if (data.profile) { all.name = data.profile.name; p.product = data.profile.product; p.startDate = data.profile.startDate; }
-  p.scans = data.scans;
-  saveAll(all);
 }
 
 function addProduct(name, product, startDate) {

@@ -149,23 +149,27 @@ function renderDashboard() {
     vc.className = 'card verdict ' + v.type;
     const chip = (c) => `<li class="dchip ${c.d > 0 ? 'up' : 'down'}">${esc(c.label)} ${c.d > 0 ? '+' + c.d : '−' + Math.abs(c.d)}</li>`;
     const scoreList = (arr) => arr.map((x) => `<li><span>${esc(x.label)}</span><b style="color:${scoreColor(x.s)}">${x.s}</b></li>`).join('');
-    vc.innerHTML = `<span class="tag">${v.type.toUpperCase()}</span><h3 class="v-title">${esc(v.title)}</h3><p class="v-text">${esc(v.text)}</p>` +
+    const details =
       (v.changes && v.changes.length ? `<p class="v-label">What changed since your first scan</p><ul class="dchips">${v.overallDelta != null ? `<li class="dchip ${v.overallDelta > 0 ? 'up' : v.overallDelta < 0 ? 'down' : 'flat'}">Overall ${v.overallDelta > 0 ? '+' : v.overallDelta < 0 ? '−' : '±'}${Math.abs(v.overallDelta)}</li>` : ''}${v.changes.map(chip).join('')}</ul>` : '') +
       (scans.length < 2 && v.summary ? `<div class="v-split"><div><p class="v-label">Strongest</p><ul class="v-scores">${scoreList(v.summary.strong)}</ul></div><div><p class="v-label">Needs care</p><ul class="v-scores">${scoreList(v.summary.weak)}</ul></div></div>` : '') +
       (v.meaning ? `<p class="v-label">What it means</p><p>${esc(v.meaning)}</p>` : '') +
       (v.product ? `<p class="v-label">About ${esc(v.product.name)}</p><p>${esc(v.product.about)}</p>` : '') +
-      `<div class="v-next"><p class="v-label">Next step</p><p>${esc(v.next)}</p></div>` +
       (v.watch ? `<p class="v-label">What to watch</p><p class="muted">${esc(v.watch)}${v.watchExtra ? ' ' + esc(v.watchExtra) : ''}</p>` : '');
+    // Always visible: tag, title, summary and the next step. Everything else folds away.
+    vc.innerHTML = `<span class="tag">${v.type.toUpperCase()}</span><h3 class="v-title">${esc(v.title)}</h3><p class="v-text">${esc(v.text)}</p>` +
+      `<div class="v-next"><p class="v-label">Next step</p><p>${esc(v.next)}</p></div>` +
+      (details ? `<details class="fold"><summary>Why, and what to watch</summary><div class="fold-body">${details}</div></details>` : '');
     if (v.recs && v.recs.length) {
       rc.className = 'recs';
-      rc.innerHTML = `<p class="kicker">Try instead</p><h3 id="recsTitle" class="recs-title">Better matches for <em>your</em> skin</h3><p class="muted">${esc(v.recsIntro)}</p>
+      const n = v.recs.length;
+      rc.innerHTML = `<details class="fold recs-fold"><summary><span class="kicker">Try instead</span><span id="recsTitle" class="recs-teaser">${n} better option${n === 1 ? '' : 's'} for <em>your</em> skin</span></summary><div class="fold-body"><p class="muted">${esc(v.recsIntro)}</p>
         <ul class="rec-list">${v.recs.map((r, i) => `<li class="rec-card">
           <span class="rec-num">0${i + 1}</span><span class="rec-for">For ${esc(r.forLabel)}</span>
           <h4>${esc(r.name)}</h4><p>${esc(r.why)}</p>
           <p class="rec-label"><b>On the label:</b> ${esc(r.label)}</p>
           <p class="rec-ex"><b>Examples:</b> ${r.examples.map((e) => `<a href="${searchUrl(e)}" target="_blank" rel="noopener">${esc(e)}</a>`).join(' · ')}</p>
         </li>`).join('')}</ul>
-        <p class="fine">Not medical advice. Patch test new products on your jaw for 2–3 days first, and introduce one at a time. Example links are plain web searches.</p>`;
+        <p class="fine">Not medical advice. Patch test new products on your jaw for 2–3 days first, and introduce one at a time. Example links are plain web searches.</p></div></details>`;
     } else { rc.className = 'recs hidden'; rc.innerHTML = ''; }
   } else { vc.className = 'card verdict hidden'; vc.innerHTML = ''; rc.className = 'recs hidden'; rc.innerHTML = ''; }
 
@@ -176,6 +180,7 @@ function renderDashboard() {
       <span class="score" style="color:${scoreColor(s.overall)}" aria-label="Score ${s.overall ?? 'unknown'}">${s.overall ?? '--'}</span></li>`).join('')
     : '<li class="muted">No scans yet.</li>';
 
+  $('historyCount').textContent = scans.length ? `· ${scans.length} scan${scans.length === 1 ? '' : 's'}` : '';
   renderChart(scans);
 }
 
@@ -214,6 +219,12 @@ function renderReminder() {
   $('calStart').textContent = fmtDue(reminderEvent(p.product, info.next, t).start) + ' at ' + t;
   $('lnkGcal').href = googleCalUrl(p.product, info.next, t);
 }
+
+// Chart lives in a collapsed <details>; resize when it opens so it isn't drawn at 0px.
+document.addEventListener('DOMContentLoaded', () => {
+  const d = document.getElementById('trendDetails');
+  if (d) d.addEventListener('toggle', () => { if (d.open && chart) chart.resize(); });
+});
 
 function renderChart(scans) {
   $('trendEmpty').classList.toggle('hidden', scans.length > 0);
@@ -438,7 +449,7 @@ function renderResults(result) {
           ${change != null ? deltaBadge(change) : '<span class="delta-badge neutral">Baseline</span>'}
         </div>
       </div>
-      <details ${s < 65 ? 'open' : ''}><summary>Ingredient tips</summary><p>${c.tip}</p>${c.avoid ? `<p class="muted">⚠️ ${c.avoid}</p>` : ''}</details>
+      <details class="fold"><summary>Ingredient tips${s < 65 ? ' · worth a look' : ''}</summary><p>${c.tip}</p>${c.avoid ? `<p class="muted">⚠️ ${c.avoid}</p>` : ''}</details>
     </div>`;
   }).join('');
 }

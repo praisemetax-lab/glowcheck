@@ -100,7 +100,7 @@
           <div><p class="remind-text" id="remindText">Next selfie soon</p><p class="remind-sub" id="remindSub"></p></div>
         </div>
         <button type="button" class="btn primary remind-cta hidden" id="btnRemindScan">📸 Take my selfie now</button>
-        <details class="remind-cal">
+        <details class="remind-cal fold">
           <summary>Add a weekly reminder to my calendar</summary>
           <div class="cal-body">
             <label class="cal-time">Remind me at
@@ -118,16 +118,14 @@
 
       <button class="btn primary big" id="btnScan">📸 Take this week's selfie</button>
 
-      <div class="card" id="trendCard">
-        <h3>Your trend</h3>
+      <details class="card fold" id="trendDetails"><summary><h3>Your trend</h3></summary><div class="fold-body" id="trendCard">
         <canvas id="trendChart" height="200" role="img" aria-label="Line chart of your overall, dark spot, acne and oiliness scores over time"></canvas>
         <p class="muted center" id="trendEmpty">Your first scan becomes your baseline.</p>
-      </div>
+      </div></details>
 
-      <div class="card">
-        <h3>History</h3>
-        <ul id="historyList" class="history"></ul>
-      </div>
+      <details class="card fold" id="historyDetails"><summary><h3>History <span class="muted" id="historyCount"></span></h3></summary>
+        <ul id="historyList" class="history fold-body"></ul>
+      </details>
     </section>
 
     <!-- 3. CAPTURE -->

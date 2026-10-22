@@ -4,6 +4,7 @@
 // Returns { taskId } (real) or { mock: true, result } (mock mode).
 const { ACTIONS, isMock, friendly, youcam, readBody, send } = require('./_youcam');
 const { mockResult } = require('./_mock');
+const { realScanAllowed } = require('./_guard');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
@@ -15,6 +16,15 @@ module.exports = async (req, res) => {
     // MOCK MODE: pretend, return sample data straight away.
     if (isMock()) {
       return send(res, 200, { mock: true, result: mockResult(Number(body.week) || 0) });
+    }
+    // DEMO LINK (/?demo=1 or /demo): never call YouCam, never spend units.
+    if (body.demo === true || body.demo === 1 || body.demo === '1') {
+      return send(res, 200, { mock: true, demo: true, result: mockResult(Number(body.week) || 0) });
+    }
+    // SAFETY CAP: protect the unit reserve (credit floor + daily limit). Falls back to sample results.
+    const guard = await realScanAllowed();
+    if (!guard.ok) {
+      return send(res, 200, { mock: true, paused: true, reason: guard.reason, result: mockResult(Number(body.week) || 0) });
     }
 
     const contentType = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];

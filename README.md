@@ -93,3 +93,8 @@ MIT – see `LICENSE`.
 ## Image credits
 
 All home-page images in `img/` (`hero-glow.webp`, `step-selfie.webp`, `step-track.webp`, `step-verdict.webp`) are **AI-generated illustrations of a fictional person**. They were created for GlowCheck and don't show a real model, so no photographer credit or model release applies.
+
+## Demo link & credit protection
+
+- **Demo link:** `https://glowcheck-mu.vercel.app/?demo=1` (or `/demo`) only ever returns sample results and never calls YouCam. The flag is saved in the browser until the normal URL (with no `demo` flag) is opened again.
+- **Safety cap for real scans** (`api/_guard.js`): before each real scan the server checks two free YouCam endpoints: `GET /s2s/v1.0/client/credit` (units left) and `/credit/history` (today's unit deductions, UTC). The scan is refused, and sample results are shown instead, if units are below `CREDIT_FLOOR` (default 150) or today's count has reached `SCAN_DAILY_LIMIT` (default 20). If YouCam can't be checked, it also refuses (fails closed).

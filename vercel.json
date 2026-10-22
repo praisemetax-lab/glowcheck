@@ -4,5 +4,11 @@
     "api/*.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/demo",
+      "destination": "/index.html"
+    }
+  ]
 }

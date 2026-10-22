@@ -56,6 +56,19 @@ async function fetchJson(url, options = {}, timeoutMs = 60000) {
   return data;
 }
 
+// Demo link (/?demo=1 or /demo): sample results only, never spends YouCam units.
+// Persisted in localStorage; only cleared by opening the normal URL (no flag) as a fresh page load.
+const DEMO_KEY = 'glowcheck_demo';
+(function initDemo() {
+  const q = new URLSearchParams(location.search);
+  const flagged = q.get('demo') === '1' || /^\/demo\/?$/.test(location.pathname);
+  try {
+    if (flagged) localStorage.setItem(DEMO_KEY, '1');
+    else if (!q.has('demo')) localStorage.removeItem(DEMO_KEY);
+  } catch { /* storage blocked: demo still works for this page via the URL */ }
+  window.GLOW_DEMO = flagged || (() => { try { return localStorage.getItem(DEMO_KEY) === '1'; } catch { return false; } })();
+})();
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
@@ -109,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('maskToggle').addEventListener('change', () => $('maskImg').classList.toggle('hidden', !$('maskToggle').checked || !$('maskImg').getAttribute('src')));
 
   // Ask the server if we're in demo/mock mode (just for the badge).
+  if (window.GLOW_DEMO) { $('mockBadge').textContent = 'Demo mode: sample results'; $('mockBadge').classList.remove('hidden'); }
   fetch('/api/health').then((r) => r.json()).then((h) => { if (h.mock) $('mockBadge').classList.remove('hidden'); }).catch(() => {});
 
   show(loadAll().products.length ? 'dash' : 'onboard');
@@ -313,11 +327,12 @@ async function analyse(rawDataUrl) {
 
   try {
     const week = loadData().scans.length; // used by mock mode to simulate progress
-    const data = await fetchJson('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: photo, week }) });
+    const data = await fetchJson('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: photo, week, demo: window.GLOW_DEMO ? 1 : 0 }) });
 
     let result;
     if (data.mock) {
-      $('loadingMsg').textContent = 'Demo mode: generating sample results…';
+      $('loadingMsg').textContent = data.paused ? 'Real scans are paused right now. Showing sample results…' : 'Demo mode: generating sample results…';
+      if (data.paused) toast('Real scans are paused right now. Showing sample results.');
       await sleep(1800); // feel like a real scan
       result = data.result;
     } else {

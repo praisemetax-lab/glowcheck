@@ -17,7 +17,7 @@ http.createServer(async (req, res) => {
     return Promise.resolve(require(file)(req, res)).catch((e) => { console.error(e); if (!res.headersSent) { res.statusCode = 500; res.end('{"error":"Server error"}'); } });
   }
   // Only serve the public front-end files (never .env*, server.js, package.json, api/ source…).
-  const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname).replace(/^\/+/, '');
+  const rel = (url.pathname === '/' || url.pathname === '/demo') ? 'index.html' : decodeURIComponent(url.pathname).replace(/^\/+/, '');
   const file = path.join(__dirname, path.normalize(rel));
   const ok = rel === 'index.html' || /^(css|js|img)\/[\w.-]+$/.test(rel);
   if (!ok || !file.startsWith(__dirname + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; return res.end('Not found'); }

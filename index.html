@@ -78,10 +78,14 @@
       </ul>
       <button class="btn primary big" id="btnCameraKit">Open guided camera</button>
       <label class="btn ghost big file-btn">
-        Upload or snap a photo
-        <input type="file" id="fileInput" class="visually-hidden" accept="image/jpeg,image/png" capture="user" />
+        📷 Take a photo
+        <input type="file" id="fileInputCam" class="visually-hidden" accept="image/jpeg,image/png" capture="user" />
       </label>
-      <p class="fine center">The guided camera checks lighting and face position for you. If it doesn't work on your device, use upload.</p>
+      <label class="btn ghost big file-btn">
+        🖼️ Upload from gallery
+        <input type="file" id="fileInput" class="visually-hidden" accept="image/jpeg,image/png" />
+      </label>
+      <p class="fine center">The guided camera checks lighting and face position for you. If it doesn't work on your device, take or upload a photo instead.</p>
       <!-- YouCam Camera Kit mounts its UI here (required id) -->
       <div id="YMK-module"></div>
     </section>

@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('btnScan').addEventListener('click', () => show('capture'));
   $('fileInput').addEventListener('change', onFilePicked);
+  $('fileInputCam').addEventListener('change', onFilePicked);
   $('btnCameraKit').addEventListener('click', openCameraKit);
   $('maskToggle').addEventListener('change', () => $('maskImg').classList.toggle('hidden', !$('maskToggle').checked || !$('maskImg').getAttribute('src')));
 

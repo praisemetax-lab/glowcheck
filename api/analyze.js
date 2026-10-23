@@ -15,16 +15,16 @@ module.exports = async (req, res) => {
 
     // MOCK MODE: pretend, return sample data straight away.
     if (isMock()) {
-      return send(res, 200, { mock: true, result: mockResult(Number(body.week) || 0) });
+      return send(res, 200, { mock: true, result: mockResult(Number(body.week) || 0, body.seed) });
     }
     // DEMO LINK (/?demo=1 or /demo): never call YouCam, never spend units.
     if (body.demo === true || body.demo === 1 || body.demo === '1') {
-      return send(res, 200, { mock: true, demo: true, result: mockResult(Number(body.week) || 0) });
+      return send(res, 200, { mock: true, demo: true, result: mockResult(Number(body.week) || 0, body.seed) });
     }
     // SAFETY CAP: protect the unit reserve (credit floor + daily limit). Falls back to sample results.
     const guard = await realScanAllowed();
     if (!guard.ok) {
-      return send(res, 200, { mock: true, paused: true, reason: guard.reason, result: mockResult(Number(body.week) || 0) });
+      return send(res, 200, { mock: true, paused: true, reason: guard.reason, result: mockResult(Number(body.week) || 0, body.seed) });
     }
 
     const contentType = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];

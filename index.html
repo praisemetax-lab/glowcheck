@@ -156,7 +156,7 @@
     <section id="view-loading" class="view hidden center">
       <img id="loadingPhoto" class="loading-photo" alt="Your selfie being analysed" />
       <div class="scanline"></div>
-      <h2>Analysing your skin…</h2>
+      <h2>Looking at your skin…</h2>
       <p class="muted" id="loadingMsg" aria-live="polite">Uploading photo</p>
     </section>
 
@@ -166,7 +166,7 @@
       <div class="card score-hero">
         <div class="ring" id="scoreRing" aria-label="Overall skin score"><span id="overallScore">--</span></div>
         <div>
-          <h2>Skin score</h2>
+          <h2>Your skin score</h2>
           <p class="muted" id="skinAge"></p>
           <p id="deltaText"></p>
         </div>
@@ -174,20 +174,20 @@
 
       <div class="card">
         <div class="row-between">
-          <h3>Problem areas</h3>
-          <label class="switch" id="maskControls"><input type="checkbox" id="maskToggle" checked /> Show masks</label>
+          <h3>Where to look</h3>
+          <label class="switch" id="maskControls"><input type="checkbox" id="maskToggle" checked /> Show highlights</label>
         </div>
         <div class="photo-wrap" id="photoWrap">
           <img id="resultPhoto" alt="Your selfie" />
           <img id="maskImg" class="mask" alt="" />
         </div>
-        <div class="chips" id="maskChips" role="group" aria-label="Choose which concern to highlight"></div>
-        <p class="fine" id="maskNote">Masks are only available right after a scan (they expire after ~2 hours). Scores are saved forever.</p>
+        <div class="chips" id="maskChips" role="group" aria-label="Choose what to highlight"></div>
+        <p class="fine" id="maskNote">Highlights only show right after a scan (they disappear after about 2 hours). Your scores are saved.</p>
       </div>
 
-      <h3 class="section-title">Your concerns</h3>
+      <h3 class="section-title">Your skin, area by area</h3>
       <div id="concernCards" class="grid"></div>
-      <button class="btn primary big" data-go="dash">See my verdict →</button>
+      <button class="btn primary big" data-go="dash">What should I do? →</button>
     </section>
 
     <!-- Error toast -->

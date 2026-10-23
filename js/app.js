@@ -150,33 +150,33 @@ function renderDashboard() {
     const chip = (c) => `<li class="dchip ${c.d > 0 ? 'up' : 'down'}">${esc(c.label)} ${c.d > 0 ? '+' + c.d : '−' + Math.abs(c.d)}</li>`;
     const scoreList = (arr) => arr.map((x) => `<li><span>${esc(x.label)}</span><b style="color:${scoreColor(x.s)}">${x.s}</b></li>`).join('');
     const details =
-      (v.changes && v.changes.length ? `<p class="v-label">What changed since your first scan</p><ul class="dchips">${v.overallDelta != null ? `<li class="dchip ${v.overallDelta > 0 ? 'up' : v.overallDelta < 0 ? 'down' : 'flat'}">Overall ${v.overallDelta > 0 ? '+' : v.overallDelta < 0 ? '−' : '±'}${Math.abs(v.overallDelta)}</li>` : ''}${v.changes.map(chip).join('')}</ul>` : '') +
-      (scans.length < 2 && v.summary ? `<div class="v-split"><div><p class="v-label">Strongest</p><ul class="v-scores">${scoreList(v.summary.strong)}</ul></div><div><p class="v-label">Needs care</p><ul class="v-scores">${scoreList(v.summary.weak)}</ul></div></div>` : '') +
-      (v.meaning ? `<p class="v-label">What it means</p><p>${esc(v.meaning)}</p>` : '') +
-      (v.product ? `<p class="v-label">About ${esc(v.product.name)}</p><p>${esc(v.product.about)}</p>` : '') +
-      (v.watch ? `<p class="v-label">What to watch</p><p class="muted">${esc(v.watch)}${v.watchExtra ? ' ' + esc(v.watchExtra) : ''}</p>` : '');
+      (v.changes && v.changes.length ? `<p class="v-label">What changed</p><ul class="dchips">${v.overallDelta != null ? `<li class="dchip ${v.overallDelta > 0 ? 'up' : v.overallDelta < 0 ? 'down' : 'flat'}">Total ${v.overallDelta > 0 ? '+' : v.overallDelta < 0 ? '−' : '±'}${Math.abs(v.overallDelta)}</li>` : ''}${v.changes.map(chip).join('')}</ul>` : '') +
+      (scans.length < 2 && v.summary ? `<div class="v-split"><div><p class="v-label">Doing great</p><ul class="v-scores">${scoreList(v.summary.strong)}</ul></div><div><p class="v-label">Needs some love</p><ul class="v-scores">${scoreList(v.summary.weak)}</ul></div></div>` : '') +
+      (v.meaning ? `<p class="v-label">What this means</p><p>${esc(v.meaning)}</p>` : '') +
+      (v.product ? `<p class="v-label">What ${esc(v.product.name)} does</p><p>${esc(v.product.about)}</p>` : '') +
+      (v.watch ? `<p class="v-label">Keep an eye on</p><p class="muted">${esc(v.watch)}${v.watchExtra ? ' ' + esc(v.watchExtra) : ''}</p>` : '');
     // Always visible: tag, title, summary and the next step. Everything else folds away.
-    vc.innerHTML = `<span class="tag">${v.type.toUpperCase()}</span><h3 class="v-title">${esc(v.title)}</h3><p class="v-text">${esc(v.text)}</p>` +
-      `<div class="v-next"><p class="v-label">Next step</p><p>${esc(v.next)}</p></div>` +
-      (details ? `<details class="fold"><summary>Why, and what to watch</summary><div class="fold-body">${details}</div></details>` : '');
+    vc.innerHTML = `<span class="tag">${TAG_WORDS[v.type] || v.type.toUpperCase()}</span><h3 class="v-title">${esc(v.title)}</h3><p class="v-text">${esc(v.text)}</p>` +
+      `<div class="v-next"><p class="v-label">What to do now</p><p>${esc(v.next)}</p></div>` +
+      (details ? `<details class="fold"><summary>Tell me more</summary><div class="fold-body">${details}</div></details>` : '');
     if (v.recs && v.recs.length) {
       rc.className = 'recs';
       const n = v.recs.length;
-      rc.innerHTML = `<details class="fold recs-fold"><summary><span class="kicker">Try instead</span><span id="recsTitle" class="recs-teaser">${n} better option${n === 1 ? '' : 's'} for <em>your</em> skin</span></summary><div class="fold-body"><p class="muted">${esc(v.recsIntro)}</p>
+      rc.innerHTML = `<details class="fold recs-fold"><summary><span class="kicker">Try this instead</span><span id="recsTitle" class="recs-teaser">${n} better pick${n === 1 ? '' : 's'} for <em>your</em> skin</span></summary><div class="fold-body"><p class="muted">${esc(v.recsIntro)}</p>
         <ul class="rec-list">${v.recs.map((r, i) => `<li class="rec-card">
           <span class="rec-num">0${i + 1}</span><span class="rec-for">For ${esc(r.forLabel)}</span>
           <h4>${esc(r.name)}</h4><p>${esc(r.why)}</p>
-          <p class="rec-label"><b>On the label:</b> ${esc(r.label)}</p>
-          <p class="rec-ex"><b>Examples:</b> ${r.examples.map((e) => `<a href="${searchUrl(e)}" target="_blank" rel="noopener">${esc(e)}</a>`).join(' · ')}</p>
+          <p class="rec-label"><b>Look for:</b> ${esc(r.label)}</p>
+          <p class="rec-ex"><b>For example:</b> ${r.examples.map((e) => `<a href="${searchUrl(e)}" target="_blank" rel="noopener">${esc(e)}</a>`).join(' · ')}</p>
         </li>`).join('')}</ul>
-        <p class="fine">Not medical advice. Patch test new products on your jaw for 2–3 days first, and introduce one at a time. Example links are plain web searches.</p></div></details>`;
+        <p class="fine">Not medical advice. Try a new product on a small spot by your jaw for 2–3 days first. Add one new thing at a time. Links are just web searches.</p></div></details>`;
     } else { rc.className = 'recs hidden'; rc.innerHTML = ''; }
   } else { vc.className = 'card verdict hidden'; vc.innerHTML = ''; rc.className = 'recs hidden'; rc.innerHTML = ''; }
 
   // History list (newest first)
   $('historyList').innerHTML = scans.length ? scans.slice().reverse().map((s, i) => `
     <li>${s.thumb ? `<img src="${s.thumb}" alt="">` : '<span class="thumb-ph" aria-hidden="true"></span>'}
-      <div><b>${fmtDate(s.date)}</b><br><span class="muted">${i === scans.length - 1 ? 'Baseline' : 'Week ' + Math.round(daysBetween(scans[0].date, s.date) / 7)}</span></div>
+      <div><b>${fmtDate(s.date)}</b><br><span class="muted">${i === scans.length - 1 ? 'First selfie' : 'Week ' + Math.round(daysBetween(scans[0].date, s.date) / 7)}</span></div>
       <span class="score" style="color:${scoreColor(s.overall)}" aria-label="Score ${s.overall ?? 'unknown'}">${s.overall ?? '--'}</span></li>`).join('')
     : '<li class="muted">No scans yet.</li>';
 
@@ -195,7 +195,7 @@ function renderSwitcher() {
     return `<button type="button" role="listitem" class="pcard${on ? ' active' : ''}" data-id="${p.id}" aria-current="${on}">
       <span class="pname">${esc(p.product)}${isDue(p) ? '<span class="due-dot" aria-hidden="true"></span>' : ''}</span>
       <span class="pmeta">Day ${day} · ${p.scans.length} scan${p.scans.length === 1 ? '' : 's'}${isDue(p) ? ' · <b class="due-txt">Selfie due</b>' : ''}</span>
-      <span class="ptag ${v ? v.type : 'none'}">${v ? v.type.toUpperCase() : 'NO SCANS'}</span>
+      <span class="ptag ${v ? v.type : 'none'}">${v ? (TAG_WORDS[v.type] || v.type.toUpperCase()) : 'NO SELFIES YET'}</span>
     </button>`;
   }).join('');
   $('productList').querySelectorAll('.pcard').forEach((b) => b.addEventListener('click', () => {
@@ -337,12 +337,13 @@ async function analyse(rawDataUrl) {
   show('loading');
 
   try {
-    const week = loadData().scans.length; // used by mock mode to simulate progress
-    const data = await fetchJson('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: photo, week, demo: window.GLOW_DEMO ? 1 : 0 }) });
+    const cur = loadData(); const week = cur.scans.length; // used by mock mode to simulate progress
+    const seed = cur.profile ? (cur.id || '') + '|' + cur.profile.product : ''; // each product gets its own demo story
+    const data = await fetchJson('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: photo, week, seed, demo: window.GLOW_DEMO ? 1 : 0 }) });
 
     let result;
     if (data.mock) {
-      $('loadingMsg').textContent = data.paused ? 'Real scans are paused right now. Showing sample results…' : 'Demo mode: generating sample results…';
+      $('loadingMsg').textContent = data.paused ? 'Real scans are paused right now. Showing sample results…' : 'Demo mode: making sample results…';
       if (data.paused) toast('Real scans are paused right now. Showing sample results.');
       await sleep(1800); // feel like a real scan
       result = data.result;
@@ -366,7 +367,7 @@ async function analyse(rawDataUrl) {
 
 // Ask our server every 3 seconds until YouCam says success or error (max ~2 minutes).
 async function pollTask(taskId) {
-  const msgs = ['Finding your face…', 'Checking dark spots & marks…', 'Measuring oiliness & pores…', 'Almost done…'];
+  const msgs = ['Finding your face…', 'Checking spots & marks…', 'Looking at oil & pores…', 'Almost done…'];
   let fails = 0;
   for (let i = 0; i < 40; i++) {
     $('loadingMsg').textContent = msgs[Math.min(i, msgs.length - 1)];
@@ -381,13 +382,16 @@ async function pollTask(taskId) {
   throw new Error('The analysis is taking too long. Please try again.');
 }
 
+// Short, plain words for the verdict badge.
+const TAG_WORDS = { wait: 'TOO EARLY', keep: 'KEEP', adjust: 'SWITCH', stop: 'PAUSE' };
+
 // ---------- Results screen ----------
 const CONCERN_ICONS = { age_spot: '🌗', acne: '🫧', oiliness: '💧', pore: '🔍', redness: '🌹', texture: '🪶', moisture: '💦',
   radiance: '✨', dark_circle_v2: '👁️', eye_bag: '😴', wrinkle: '〰️' };
 // Coloured "change since first scan" pill: green = better, rose = worse, grey = no change.
 function deltaBadge(d) {
   const cls = d > 0 ? 'up' : d < 0 ? 'down' : 'neutral';
-  const txt = d > 0 ? `▲ +${d} since first scan` : d < 0 ? `▼ −${Math.abs(d)} since first scan` : 'No change since first scan';
+  const txt = d > 0 ? `▲ +${d} since your first selfie` : d < 0 ? `▼ −${Math.abs(d)} since your first selfie` : 'Same as your first selfie';
   return `<span class="delta-badge ${cls}">${txt}</span>`;
 }
 function renderResults(result) {
@@ -396,10 +400,10 @@ function renderResults(result) {
 
   $('overallScore').textContent = result.overall ?? '--';
   $('scoreRing').style.setProperty('--p', result.overall || 0);
-  $('skinAge').textContent = result.skinAge ? `Skin age: ${result.skinAge}` : '';
+  $('skinAge').textContent = result.skinAge ? `Your skin looks about ${result.skinAge}` : '';
   if (scans.length > 1 && result.overall != null && base.overall != null) {
     $('deltaText').innerHTML = deltaBadge(result.overall - base.overall);
-  } else $('deltaText').innerHTML = '<span class="delta-badge neutral">📌 This is your baseline</span>';
+  } else $('deltaText').innerHTML = '<span class="delta-badge neutral">📌 Your starting point</span>';
 
   // Photo + mask chips
   // Masks are drawn on YouCam's resized copy of the photo (same aspect, transparent PNG
@@ -445,11 +449,11 @@ function renderResults(result) {
           <span class="mini-num" style="color:${scoreColor(s)}">${s}</span>
         </div>
         <div class="concern-info">
-          <b class="concern-name"><span class="c-icon" aria-hidden="true">${CONCERN_ICONS[k] || '✨'}</span>${c.label}${c.focus ? '<span class="focus">focus</span>' : ''}</b>
-          ${change != null ? deltaBadge(change) : '<span class="delta-badge neutral">Baseline</span>'}
+          <b class="concern-name"><span class="c-icon" aria-hidden="true">${CONCERN_ICONS[k] || '✨'}</span>${c.label}${c.focus ? '<span class="focus">key</span>' : ''}</b>
+          ${change != null ? deltaBadge(change) : '<span class="delta-badge neutral">Starting point</span>'}
         </div>
       </div>
-      <details class="fold"><summary>Ingredient tips${s < 65 ? ' · worth a look' : ''}</summary><p>${c.tip}</p>${c.avoid ? `<p class="muted">⚠️ ${c.avoid}</p>` : ''}</details>
+      <details class="fold"><summary>${s < 65 ? 'What can help' : 'Tips'}</summary><p>${c.tip}</p>${c.avoid ? `<p class="muted">⚠️ ${c.avoid}</p>` : ''}</details>
     </div>`;
   }).join('');
 }

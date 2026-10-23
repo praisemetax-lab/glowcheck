@@ -26,32 +26,32 @@ function baseVerdict(profile, scans) {
   // Biggest win and biggest loss, to explain the verdict.
   const sorted = [...deltas].sort((a, b) => b.d - a.d);
   const reasons = [];
-  if (sorted.length && sorted[0].d > 0) reasons.push(`${CONCERNS[sorted[0].k].label} improved by ${sorted[0].d} points`);
+  if (sorted.length && sorted[0].d > 0) reasons.push(`${CONCERNS[sorted[0].k].label} went up ${sorted[0].d} points`);
   if (sorted.length && sorted[sorted.length - 1].d < 0) {
     const w = sorted[sorted.length - 1];
-    reasons.push(`${CONCERNS[w.k].label} dropped by ${-w.d} points`);
+    reasons.push(`${CONCERNS[w.k].label} went down ${-w.d} points`);
   }
-  reasons.push(`Overall score ${overallDelta >= 0 ? '+' : ''}${overallDelta} since your first scan`);
+  reasons.push(`Total score ${overallDelta >= 0 ? '+' : ''}${overallDelta} since your first selfie`);
 
   if (scans.length < 2) {
-    return { type: 'wait', title: 'Baseline saved', text: 'Come back in 7 days for your next selfie. Most products need 4–8 weeks to show results.', reasons: [] };
+    return { type: 'wait', title: 'First selfie saved', text: 'Come back in a week for the next one.', reasons: [] };
   }
   if (rednessDelta <= -6) {
-    return { type: 'stop', title: 'Stop & check', text: 'Redness has gone up, which can mean irritation. Pause this product, use only a gentle cleanser, moisturiser and SPF, and see a dermatologist if it continues.', reasons: [`Redness score fell by ${-rednessDelta} points`, ...reasons] };
+    return { type: 'stop', title: 'Your skin looks upset', text: 'It may not like this product.', irritated: true, reasons: [`Calm skin went down ${-rednessDelta} points`, ...reasons] };
   }
   if (overallDelta <= -5) {
-    return { type: 'stop', title: 'Stop', text: 'Your skin is scoring worse than when you started. Consider stopping this product.', reasons };
+    return { type: 'stop', title: 'Time to take a break', text: 'Your skin is doing worse than when you started.', reasons };
   }
   if (days < 14) {
-    return { type: 'wait', title: 'Too early to tell', text: `Only ${days} ${days === 1 ? "day" : "days"} in. Keep using it consistently – skin cells renew roughly every 4 weeks.`, reasons };
+    return { type: 'wait', title: 'Too early to tell', text: `Only ${days} ${days === 1 ? 'day' : 'days'} in.`, reasons };
   }
   if (overallDelta >= 3 || focusDelta >= 3) {
-    return { type: 'keep', title: 'Keep going', text: 'Your skin is responding well. Stay consistent and keep wearing sunscreen.', reasons };
+    return { type: 'keep', title: 'It’s working – keep going', text: 'Your skin is getting better.', reasons };
   }
   if (days < 42) {
-    return { type: 'keep', title: 'Keep – be patient', text: 'No big change yet, which is normal before week 6. Keep going.', reasons };
+    return { type: 'keep', title: 'Give it more time', patient: true, text: 'No big change yet.', reasons };
   }
-  return { type: 'adjust', title: 'Adjust', text: 'After 6+ weeks there is little change. Time to try a different active ingredient – see the options below.', reasons };
+  return { type: 'adjust', title: 'Time to try something else', text: 'Not much has changed.', reasons };
 }
 
 // ---------- Explanations + "Try instead" recommendations ----------
@@ -74,10 +74,10 @@ function skinSummary(scan) {
 
 function overallWords(n) {
   if (n == null) return 'not available';
-  if (n >= 80) return 'very healthy';
-  if (n >= 70) return 'healthy, with a few things to work on';
-  if (n >= 60) return 'fair, with clear room to improve';
-  return 'in need of some extra care';
+  if (n >= 80) return 'really healthy';
+  if (n >= 70) return 'healthy, with a few spots to work on';
+  if (n >= 60) return 'okay, with room to glow more';
+  return 'like it needs some extra care';
 }
 
 function pickRecs(weakKeys, usedActives, max = 3) {
@@ -111,12 +111,12 @@ function getVerdict(profile, scans) {
   v.product = {
     name: profile.product, actives,
     about: actives.length ? actives.map((a) => `${a.name} ${a.blurb}`).join('; ') + '.'
-      : "We don't recognise the key ingredient in this product yet. Check its label for one main active (e.g. niacinamide, salicylic acid, vitamin C) so you know what it should improve.",
+      : "We don't know this one yet. Check the label for a main ingredient, like niacinamide, salicylic acid or vitamin C.",
     matches: targets.map(label),
     fit: !actives.length ? 'unknown' : targets.length ? (targets.length >= 2 ? 'good' : 'partial') : 'off',
     heavyWarn
   };
-  v.watch = actives.length ? actives[0].watch : 'Watch your weakest areas below – they should move first if the product suits you.';
+  v.watch = actives.length ? actives[0].watch : 'Watch your lowest scores. If the product suits you, they should rise first.';
 
   // Concern changes since the first scan (biggest moves first).
   if (scans.length > 1) {
@@ -136,40 +136,66 @@ function getVerdict(profile, scans) {
   const best = ups[0], worst = downs[0];
   const od = v.overallDelta ?? 0;
   const weeks = Math.max(1, Math.round(days / 7));
-  const patient = v.type === 'keep' && /patient/i.test(v.title);
-  if (scans.length < 2) {
-    v.title = 'Your baseline is saved';
-    v.text = `Overall score ${summary.overall ?? '--'}: ${overallWords(summary.overall)}.`;
-    v.meaning = v.product.fit === 'good' ? `Good match: it targets ${v.product.matches.join(' and ').toLowerCase()}, two of the areas that need the most care.`
-      : v.product.fit === 'partial' ? `Partial match: it targets ${v.product.matches.join(', ').toLowerCase()}, but not your other weak areas.`
-      : v.product.fit === 'off' ? "Mismatch: it isn't designed for the areas that need the most care, so expect little change there."
-      : "We can't tell yet how well it matches the areas that need the most care.";
-    v.next = 'Take your next selfie in 7 days, in the same light and at the same time of day.';
+  const patient = !!v.patient;
+  const name = profile.name ? profile.name.split(' ')[0] : '';
+  const hi = name ? `${name}, ` : '';
+  const P = profile.product || 'this product';
+  const now = summary.overall ?? '--';
+  const big = (c) => c && Math.abs(c.d) >= 6;
+  const list = (arr) => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1];
+  const weakNames = list(summary.weak.map((x) => lc(x.label)));
+  const matchNames = list(v.product.matches.map(lc));
+  const fitLine = v.product.fit === 'good' ? `Nice pick. It works on ${matchNames}, which need the most love right now.`
+    : v.product.fit === 'partial' ? `It helps with ${matchNames}. It won't do much for the rest.`
+    : v.product.fit === 'off' ? `It isn't made for ${weakNames}, which need the most help.`
+    : "We don't know this product's main ingredient yet.";
+  const n = scans.length;
+
+  if (n < 2) {
+    v.title = name ? `Got it, ${name}! First selfie saved` : 'First selfie saved';
+    v.text = `Your starting score is ${now}. Your skin looks ${overallWords(summary.overall)}.`;
+    v.meaning = fitLine;
+    v.next = 'Take your next selfie in 7 days. Same spot, same light, same time of day.';
   } else if (v.type === 'wait') {
-    v.text = `Overall ${signed(od)} after ${vPlural(days, 'day')}${best ? `, ${lc(best.label)} ${signed(best.d)}` : ''}.`;
-    v.meaning = 'Too soon to judge: skin renews about every 4 weeks, and light, sleep or humidity can shift scores a few points from week to week.';
-    v.next = 'Keep using it daily and scan again on your due date.';
+    v.text = od > 0 ? `${hi}you're up ${od} after ${vPlural(days, 'day')}${best ? ` – ${lc(best.label)} rose the most` : ''}. A nice start!`
+      : od < 0 ? `${hi}you're down ${-od} after ${vPlural(days, 'day')}. That's okay this early.`
+      : `${hi}no change yet after ${vPlural(days, 'day')}. That's normal.`;
+    v.meaning = od < 0 ? 'Light, sleep and weather can shift scores a little. One dip early on means very little.'
+      : 'Skin takes about 4 weeks to renew itself. Real changes show up after that.';
+    v.next = `Keep using ${P} every day. Scan again next week.`;
   } else if (v.type === 'keep' && !patient) {
-    v.text = `Overall ${signed(od)} since your first scan${best ? `, with ${lc(best.label)} improving most (${signed(best.d)})` : ''}.`;
-    v.meaning = `Your skin is responding: the improvements outweigh the dips${worst ? ` (the ${lc(worst.label)} ${signed(worst.d)} is within normal week-to-week variation)` : ''}.`;
-    v.next = "Change nothing: same routine, daily SPF, and a weekly scan.";
+    const mixed = big(best) && big(worst);
+    v.title = od >= 8 ? (name ? `Great news, ${name}!` : 'Great news!') : mixed ? 'Mostly good news' : 'It’s working – keep going';
+    v.text = mixed ? `${best.label} is up ${best.d}, but ${lc(worst.label)} is down ${-worst.d}. Your score is now ${now}.`
+      : od > 0 ? `Your score went up ${od} in ${vPlural(weeks, 'week')}${best ? `. ${best.label} improved the most (+${best.d})` : ''}.`
+      : `${best ? `${best.label} is up ${best.d}` : 'Your key areas are up'}, even though your total is ${signed(od)}. Your score is ${now}.`;
+    v.meaning = mixed ? `${P} seems to help overall. Keep an eye on ${lc(worst.label)} so it doesn't keep slipping.`
+      : od >= 8 ? 'That is a big jump. Your skin clearly likes this product.'
+      : `Small steady wins add up. ${worst ? `The little dip in ${lc(worst.label)} is normal.` : 'Nothing has slipped.'}`;
+    v.next = mixed && worst.k === 'moisture' ? 'Keep going, and add a simple moisturiser to help hydration.'
+      : mixed ? `Keep going. If ${lc(worst.label)} drops again next week, use ${P} every other day.`
+      : "Don't change a thing. Keep up the sunscreen and scan each week.";
   } else if (patient) {
-    v.text = `Overall ${signed(od)} after ${vPlural(weeks, 'week')}: no clear change yet.`;
-    v.meaning = 'Expected at this stage: skin renews about every 4 weeks, so most actives look subtle at first.';
-    v.next = 'Stay consistent until at least week 6 before deciding.';
+    v.text = `Week ${weeks} and your score is ${now} (${signed(od)}). Not much has moved yet.`;
+    v.meaning = v.product.fit === 'off' ? `That makes sense. ${fitLine}` : 'Most products take 6 to 8 weeks to show. You are not there yet.';
+    v.next = `Stick with it until week 6 (${vPlural(Math.max(1, 6 - weeks), 'more week')}), then we'll decide together.`;
   } else if (v.type === 'adjust') {
-    v.text = `Overall ${signed(od)} after ${vPlural(weeks, 'week')}${worst ? `; ${lc(worst.label)} slipped ${signed(worst.d)}` : ''}.`;
-    v.title = 'Time to adjust';
-    v.meaning = "Six weeks covers more than one skin-renewal cycle, so this product most likely doesn't target what your skin needs most.";
-    v.next = 'Switch to (or add) one option below. Change one product at a time and give it 6–8 weeks.';
-    v.watch = `With the new product, track ${summary.weak.map((x) => lc(x.label)).join(', ')} – your lowest scores right now.`;
+    v.text = `After ${vPlural(weeks, 'week')}, your score is ${now} (${signed(od)})${worst ? `. ${worst.label} slipped ${-worst.d}` : ''}.`;
+    v.meaning = v.product.fit === 'off' ? `${fitLine} That's likely why little changed.` : 'That is long enough to see results. This one just isn’t doing much for you.';
+    v.next = 'Try one of the options below. Swap one thing at a time and give it 6 weeks.';
+    v.watch = `With the new product, watch ${weakNames}. Those are your lowest scores now.`;
   } else { // stop
-    v.text = `Overall ${signed(od)} since your first scan${worst ? `, led by ${lc(worst.label)} ${signed(worst.d)}` : ''}.`;
-    v.meaning = 'A drop like this usually means irritation or a poor match. "Purging" only affects breakouts, not redness or hydration.';
-    v.next = 'Pause it now. Use only a gentle cleanser, plain moisturiser and SPF for 1–2 weeks; see a dermatologist if redness or burning continues.';
-    v.watch = 'On your next scan, check whether the scores that dropped bounce back. If they do, this product was the cause.';
+    if (v.irritated) {
+      v.text = `Calm skin dropped ${-(last.concerns.redness - base.concerns.redness)} points${(last.concerns.moisture ?? 0) < (base.concerns.moisture ?? 0) ? ' and hydration is down too' : ''}. Your skin may be irritated.`;
+      v.meaning = 'Stinging, dryness or darker patches can all be signs. This is not "purging" – purging only means pimples.';
+    } else {
+      v.text = `Your score fell ${-od} points to ${now}${worst ? `, mostly from ${lc(worst.label)} (${signed(worst.d)})` : ''}.`;
+      v.meaning = `A drop this size usually means ${P} isn't a good match for your skin.`;
+    }
+    v.next = 'Stop using it for 1–2 weeks. Just wash gently, moisturise and wear sunscreen. See a doctor if it burns or gets worse.';
+    v.watch = 'Next scan, check if your scores bounce back. If they do, the product was the problem.';
   }
-  if (heavyWarn && !actives.some((a) => a.heavy)) v.watchExtra = 'Heads-up: occlusives like petroleum jelly can feel heavy and trap oil on oily or acne-prone skin – use a thin layer only on dry areas.';
+  if (heavyWarn && !actives.some((a) => a.heavy)) v.watchExtra = 'Tip: thick balms and petroleum jelly can feel heavy on oily skin. Use a thin layer on dry spots only.';
 
   // "Try instead" cards: ADJUST / STOP, or a baseline where the product misses the weakest concerns.
   const wantRecs = v.type === 'adjust' || v.type === 'stop' || (scans.length < 2 && v.product.fit === 'off');
@@ -178,9 +204,9 @@ function getVerdict(profile, scans) {
     if (v.type === 'stop' && !recs.some((r) => r.id === 'gentle')) recs = [{ id: 'gentle', for: 'redness', ...ALTERNATIVES.gentle }, ...recs].slice(0, 3);
     if (oilyOrAcne) recs = recs.filter((r) => r.id !== 'petrolatum'); // heavy occlusives don't suit oily/acne-prone weak areas
     v.recs = recs.map((r) => ({ ...r, forLabel: label(r.for) }));
-    v.recsIntro = v.type === 'stop' ? 'Gentler options for your skin while it recovers:'
-      : v.type === 'adjust' ? `Options that target your weakest areas (${summary.weak.map((x) => x.label).join(', ')}):`
-      : `Your product doesn't target your weakest areas. These do:`;
+    v.recsIntro = v.type === 'stop' ? 'Gentle picks while your skin calms down:'
+      : v.type === 'adjust' ? `These work on what needs help most: ${summary.weak.map((x) => lc(x.label)).join(', ')}.`
+      : `Your product skips the areas that need the most help. These don't:`;
   } else v.recs = [];
   return v;
 }
